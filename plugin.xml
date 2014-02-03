@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    id="at.modalog.cordova.plugin.html2pdf"
+    version="1.0.0">
+
+    <name>Html2pdf</name>
+    <repo>https://github.com/moderna/cordova-plugin-html2pdf.git</repo>
+    <keywords>html,pdf,android,ios</keywords>
+    <license>MIT</license>
+    <author>Modern Alchemists OG</author>
+    <description>
+      &lt;p&gt;This is a plugin converts the given html to a pdf document and stores it on the device.&lt;/p&gt;
+    </description>
+
+    <js-module src="www/Html2pdf.js" name="Html2pdf">
+        <clobbers target="html2pdf" /><!-- will be available under window.html2pdf -->
+    </js-module>
+
+    <!-- android -->
+    <platform name="android">
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="Html2pdf" >
+                <param name="android-package" value="at.modalog.cordova.plugin.Html2pdf"/>
+            </feature>
+        </config-file>
+
+        <source-file src="src/android/Html2pdf.java" target-dir="src/at/modalog/cordova/plugin/html2pdf" />
+    </platform>
+    
+    <!-- ios -->
+    <platform name="ios">
+        <config-file target="config.xml" parent="/*">
+            <feature name="Html2pdf">
+                <param name="ios-package" value="Html2pdf" />
+            </feature>
+        </config-file>
+
+        <header-file src="src/ios/Html2pdf.h" />
+        <source-file src="src/ios/Html2pdf.m" />
+    </platform>
+</plugin>
