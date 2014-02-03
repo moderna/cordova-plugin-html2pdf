@@ -31,7 +31,7 @@ Using
                 }
                 window.html2pdf.create(
                     "<html><head></head><body><h1>Some</h1><p>html content.</p></body></html>",
-                    "test.pdf",
+                    "~/Documents/test.pdf", // on iOS (android is "work in progress")
                     success,
                     error
                 );
