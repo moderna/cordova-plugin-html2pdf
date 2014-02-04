@@ -8,7 +8,7 @@ There is one method:
 
 * create(html, filePath, successCallback, errorCallback)
 
-Installing
+Installation
 ======
 You may use phonegap CLI as follows:
 
@@ -18,22 +18,25 @@ You may use phonegap CLI as follows:
 [phonegap] successfully added the plugin
 </pre>
 
-Using
+Usage
 ====
 ```javascript
-		document.addEventListener('deviceready', onDeviceReady);
-        function onDeviceReady() {
-                var success = function(status) {
-                    alert('Message: ' + status);
-                }
-                var error = function(status) {
-                    alert('Error: ' + status);
-                }
-                window.html2pdf.create(
-                    "<html><head></head><body><h1>Some</h1><p>html content.</p></body></html>",
-                    "~/Documents/test.pdf", // on iOS (android is "work in progress")
-                    success,
-                    error
-                );
-		}
+document.addEventListener('deviceready', onDeviceReady);
+function onDeviceReady()
+{
+        var success = function(status) {
+            alert('Message: ' + status);
+        }
+
+        var error = function(status) {
+            alert('Error: ' + status);
+        }
+
+        window.html2pdf.create(
+            "<html><head></head><body><h1>Some</h1><p>html content.</p></body></html>",
+            "~/Documents/test.pdf", // on iOS (android is "work in progress")
+            success,
+            error
+        );
+}
 ```

@@ -21,7 +21,7 @@
     <platform name="android">
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="Html2pdf" >
-                <param name="android-package" value="at.modalog.cordova.plugin.Html2pdf"/>
+                <param name="android-package" value="at.modalog.cordova.plugin.html2pdf.Html2pdf"/>
             </feature>
         </config-file>
 
