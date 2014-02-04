@@ -20,12 +20,17 @@ import com.lowagie.text.pdf.PdfWriter;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
+import android.print.PrintAttributes;
+import android.print.PrintDocumentAdapter;
+import android.print.PrintManager;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
@@ -62,16 +67,76 @@ public class Html2pdf extends CordovaPlugin
 				Log.v(LOG_TAG, "Html start:" + args.getString(0).substring(0, 30));
 				Log.v(LOG_TAG, "Html end:" + args.getString(0).substring(args.getString(0).length() - 30));
 				
-		        final Html2pdf self = this;
-		        final String content = args.optString(0, "<html></html>");
+				
+				final Html2pdf self = this;
+				final String content = args.optString(0, "<html></html>");
 		        this.callbackContext = callbackContext;
-
+				
 		        cordova.getActivity().runOnUiThread( new Runnable() {
 		            public void run()
 					{
-		                self.loadContentIntoWebView(content);
+		            	if( Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT ) // Android 4.4
+		            	{
+		            		/*
+			            	 * None-Kitkat pdf creation (Android < 4.4)
+			            	 */
+		            		
+			                self.loadContentIntoWebView(content);
+		            	}
+		            	else
+		            	{
+			            	/*
+			            	 * Kitkat pdf creation by using the android print framework (Android >= 4.4)
+			            	 */
+			            	
+							// Create a WebView object specifically for printing
+							WebView webView = new WebView(cordova.getActivity());
+							webView.getSettings().setJavaScriptEnabled(false);
+							webView.getSettings().setDefaultTextEncodingName("utf-8");
+							webView.setDrawingCacheEnabled(true);
+							webView.setVisibility(View.INVISIBLE);
+							// self.cordova.getActivity().addContentView(webView, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+							webView.setWebViewClient( new WebViewClient()
+							{
+									public boolean shouldOverrideUrlLoading(WebView view, String url) {
+										return false;
+									}
+			
+									@Override
+									public void onPageFinished(WebView view, String url)
+									{
+										
+										// Get a PrintManager instance
+										PrintManager printManager = (PrintManager) self.cordova.getActivity()
+												.getSystemService(Context.PRINT_SERVICE);
+			
+										// Get a print adapter instance
+										PrintDocumentAdapter printAdapter = view.createPrintDocumentAdapter();
+										
+						                // Get a print builder attributes instance
+						                PrintAttributes.Builder builder = new PrintAttributes.Builder();
+						                builder.setMinMargins(PrintAttributes.Margins.NO_MARGINS);
+						                
+						                // send success result to cordova
+						                PluginResult result = new PluginResult(PluginResult.Status.OK);
+						                result.setKeepCallback(false); 
+					                    self.callbackContext.sendPluginResult(result);
+						                
+						                // Create & send a print job
+										printManager.print("pdf", printAdapter, builder.build());
+									}
+							});
+							
+							// Reverse engineer base url (assets/www) from the cordova webView url
+					        String baseURL = self.webView.getUrl();
+					        baseURL        = baseURL.substring(0, baseURL.lastIndexOf('/') + 1);
+					        
+					        // Load content into the print webview
+							webView.loadDataWithBaseURL(baseURL, content, "text/html", "utf-8", null);
+		            	}
 		            }
 		        });
+
 		        
 		        // send "no-result" result to delay result handling
 		        PluginResult pluginResult = new  PluginResult(PluginResult.Status.NO_RESULT); 
@@ -120,6 +185,7 @@ public class Html2pdf extends CordovaPlugin
         page.setVisibility(View.INVISIBLE);
         page.getSettings().setJavaScriptEnabled(false);
         page.setDrawingCacheEnabled(true);
+        page.setInitialScale(1);
         
         page.setWebViewClient( new WebViewClient() {
             @Override
