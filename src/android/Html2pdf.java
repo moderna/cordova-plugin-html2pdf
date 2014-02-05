@@ -44,7 +44,7 @@ public class Html2pdf extends CordovaPlugin
 	private CallbackContext callbackContext;
 	
 	// change your path on the sdcard here
-	private String publicTmpDir = "at.modalog.cordova.plugin.html2pdf"; // prepending a dot "." will make it hidden
+	private String publicTmpDir = ".at.modalog.cordova.plugin.html2pdf"; // prepending a dot "." will make it hidden
 	private String tmpPdfName = "print.pdf";
 
 	/**
