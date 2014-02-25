@@ -34,7 +34,8 @@ function onDeviceReady()
 
         window.html2pdf.create(
             "<html><head></head><body><h1>Some</h1><p>html content.</p></body></html>",
-            "~/Documents/test.pdf", // on iOS (android is "work in progress")
+            "~/Documents/test.pdf", // on iOS,
+			// "test.pdf", on Android (will be stored in /mnt/sdcard/at.modalog.cordova.plugin.html2pdf/test.pdf)
             success,
             error
         );
