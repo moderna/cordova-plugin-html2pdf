@@ -44,7 +44,7 @@ public class Html2pdf extends CordovaPlugin
 	private CallbackContext callbackContext;
 	
 	// change your path on the sdcard here
-	private String publicTmpDir = ".at.modalog.cordova.plugin.html2pdf"; // prepending a dot "." will make it hidden
+	private String publicTmpDir = "at.modalog.cordova.plugin.html2pdf"; // prepending a dot "." would make it hidden
 	private String tmpPdfName = "print.pdf";
 
 	/**
@@ -61,12 +61,14 @@ public class Html2pdf extends CordovaPlugin
 		{
 			if( action.equals("create") )
 			{
-				Log.v(LOG_TAG,"java create html from pdf called");
+				Log.v(LOG_TAG,"java create pdf from html called");
 				Log.v(LOG_TAG, "File: " + args.getString(1));
-				Log.v(LOG_TAG, "Html: " + args.getString(0));
+				//Log.v(LOG_TAG, "Html: " + args.getString(0));
 				Log.v(LOG_TAG, "Html start:" + args.getString(0).substring(0, 30));
 				Log.v(LOG_TAG, "Html end:" + args.getString(0).substring(args.getString(0).length() - 30));
 				
+				if( args.getString(1) != null && args.getString(1) != "null" )
+					this.tmpPdfName = args.getString(1);  
 				
 				final Html2pdf self = this;
 				final String content = args.optString(0, "<html></html>");
@@ -123,7 +125,7 @@ public class Html2pdf extends CordovaPlugin
 					                    self.callbackContext.sendPluginResult(result);
 						                
 						                // Create & send a print job
-										printManager.print("pdf", printAdapter, builder.build());
+										printManager.print(self.tmpPdfName, printAdapter, builder.build());
 									}
 							});
 							
@@ -179,13 +181,23 @@ public class Html2pdf extends CordovaPlugin
     private void loadContentIntoWebView (String content)
     {
               Activity ctx = cordova.getActivity();
-        final WebView page = new WebView(ctx);
+        final WebView page = new Html2PdfWebView(ctx);
         final Html2pdf self = this;
         
-        page.setVisibility(View.INVISIBLE);
+        // set to true to see the webview (useful for debugging)
+        final boolean showWebViewForDebugging = false;
+        
+        if( showWebViewForDebugging )
+        {
+        	page.setVisibility(View.VISIBLE);
+        } else {
+        	page.setVisibility(View.INVISIBLE);
+        }
         page.getSettings().setJavaScriptEnabled(false);
         page.setDrawingCacheEnabled(true);
-        page.setInitialScale(1);
+        // Don´t scale the content to the webview's width.
+        page.getSettings().setLoadWithOverviewMode(true);
+        page.getSettings().setUseWideViewPort(false);
         
         page.setWebViewClient( new WebViewClient() {
             @Override
@@ -202,8 +214,11 @@ public class Html2pdf extends CordovaPlugin
                         pdfViewIntent.setType("application/pdf");
 
                         // remove the webview
-                        ViewGroup vg = (ViewGroup)(page.getParent());
-                        vg.removeView(page);
+                        if( !showWebViewForDebugging )
+                        {
+                        	ViewGroup vg = (ViewGroup)(page.getParent());
+                        	vg.removeView(page);
+                        }
                         
 		                // send success result to cordova
 		                PluginResult result = new PluginResult(PluginResult.Status.OK);
@@ -213,7 +228,7 @@ public class Html2pdf extends CordovaPlugin
                         // start the pdf viewer app(trigger the pdf view intent)
                         self.cordova.startActivityForResult(self, pdfViewIntent, 0);
                   }
-                }, 500);
+                }, 100);
             }
         });
 
@@ -221,7 +236,11 @@ public class Html2pdf extends CordovaPlugin
         String baseURL = webView.getUrl();
                baseURL = baseURL.substring(0, baseURL.lastIndexOf('/') + 1);
 
-        ctx.addContentView(page, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        /** We make it this small on purpose (is resized after page load has finished).
+         *  Making it small in the beginning has some effects on the html <body> (body
+         *  width will always remain 100 if not set explicitly).
+         */
+        ctx.addContentView(page, new ViewGroup.LayoutParams(100, 100));
         page.loadDataWithBaseURL(baseURL, content, "text/html", "utf-8", null);
     }
     
@@ -233,10 +252,14 @@ public class Html2pdf extends CordovaPlugin
     Bitmap getWebViewAsBitmap(WebView view)
     {
     	Bitmap b; 
+    	
+    	// prepare drawing cache
+    	view.setDrawingCacheEnabled(true);
+    	view.buildDrawingCache();
     			
         //Get the dimensions of the view so we can re-layout the view at its current size
         //and create a bitmap of the same size 
-        int width = view.getWidth();
+        int width = ((Html2PdfWebView) view).getContentWidth();
         int height = view.getContentHeight();
 
         if( width == 0 || height == 0 )
@@ -252,12 +275,11 @@ public class Html2pdf extends CordovaPlugin
         	return b;
         }
         
-        int measuredWidth = View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY);
-        int measuredHeight = height; // View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY);
+        Log.v(LOG_TAG, "Html2Pdf.getWebViewAsBitmap -> Content width: " + width + ", height: " + height );
 
         //Cause the view to re-layout
-        view.measure(measuredWidth, measuredHeight);
-        view.layout(0, 0, width, height);//view.getMeasuredHeight());
+        view.measure(width, height);
+        view.layout(0, 0, width, height);
 
         //Create a bitmap backed Canvas to draw the view into
         b = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
@@ -357,4 +379,15 @@ public class Html2pdf extends CordovaPlugin
     }
 
 
+}
+
+class Html2PdfWebView extends WebView {
+    public Html2PdfWebView(Context context) {
+		super(context);
+	}
+    
+    public int getContentWidth()
+    {
+    	return this.computeHorizontalScrollRange();
+    }
 }
