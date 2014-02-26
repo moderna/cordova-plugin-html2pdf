@@ -33,6 +33,7 @@ import android.print.PrintDocumentAdapter;
 import android.print.PrintManager;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.util.Log;
@@ -63,7 +64,7 @@ public class Html2pdf extends CordovaPlugin
 			{
 				Log.v(LOG_TAG,"java create pdf from html called");
 				Log.v(LOG_TAG, "File: " + args.getString(1));
-				//Log.v(LOG_TAG, "Html: " + args.getString(0));
+				// Log.v(LOG_TAG, "Html: " + args.getString(0));
 				Log.v(LOG_TAG, "Html start:" + args.getString(0).substring(0, 30));
 				Log.v(LOG_TAG, "Html end:" + args.getString(0).substring(args.getString(0).length() - 30));
 				
@@ -195,9 +196,12 @@ public class Html2pdf extends CordovaPlugin
         }
         page.getSettings().setJavaScriptEnabled(false);
         page.setDrawingCacheEnabled(true);
-        // Don´t scale the content to the webview's width.
-        page.getSettings().setLoadWithOverviewMode(true);
+        // Don´t auto-scale the content to the webview's width.
+        page.getSettings().setLoadWithOverviewMode(false);
         page.getSettings().setUseWideViewPort(false);
+        page.setInitialScale(100);
+        // Disable android text auto fit behaviour
+        page.getSettings().setLayoutAlgorithm(WebSettings.LayoutAlgorithm.NORMAL);
         
         page.setWebViewClient( new WebViewClient() {
             @Override
