@@ -31,8 +31,10 @@ import android.os.Handler;
 import android.print.PrintAttributes;
 import android.print.PrintDocumentAdapter;
 import android.print.PrintManager;
+import android.printservice.PrintJob;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewGroup.LayoutParams;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -47,6 +49,9 @@ public class Html2pdf extends CordovaPlugin
 	// change your path on the sdcard here
 	private String publicTmpDir = "at.modalog.cordova.plugin.html2pdf"; // prepending a dot "." would make it hidden
 	private String tmpPdfName = "print.pdf";
+	
+	// set to true to see the webview (useful for debugging)
+    private final boolean showWebViewForDebugging = false;
 
 	/**
 	 * Constructor.
@@ -91,15 +96,26 @@ public class Html2pdf extends CordovaPlugin
 			            	/*
 			            	 * Kitkat pdf creation by using the android print framework (Android >= 4.4)
 			            	 */
-			            	
+		            		
 							// Create a WebView object specifically for printing
-							WebView webView = new WebView(cordova.getActivity());
-							webView.getSettings().setJavaScriptEnabled(false);
-							webView.getSettings().setDefaultTextEncodingName("utf-8");
-							webView.setDrawingCacheEnabled(true);
-							webView.setVisibility(View.INVISIBLE);
+							WebView page = new WebView(cordova.getActivity());
+							page.getSettings().setJavaScriptEnabled(false);
+							page.setDrawingCacheEnabled(true);
+					        // Auto-scale the content to the webview's width.
+							page.getSettings().setLoadWithOverviewMode(true);
+							page.getSettings().setUseWideViewPort(true);
+							page.setInitialScale(0);
+					        // Disable android text auto fit behaviour
+							page.getSettings().setLayoutAlgorithm(WebSettings.LayoutAlgorithm.NORMAL);
+		            		if( showWebViewForDebugging )
+	            	        {
+		            			page.setVisibility(View.VISIBLE);
+	            	        } else {
+	            	        	page.setVisibility(View.INVISIBLE);
+	            	        }
+		            		
 							// self.cordova.getActivity().addContentView(webView, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-							webView.setWebViewClient( new WebViewClient()
+		            		page.setWebViewClient( new WebViewClient()
 							{
 									public boolean shouldOverrideUrlLoading(WebView view, String url) {
 										return false;
@@ -119,6 +135,9 @@ public class Html2pdf extends CordovaPlugin
 						                // Get a print builder attributes instance
 						                PrintAttributes.Builder builder = new PrintAttributes.Builder();
 						                builder.setMinMargins(PrintAttributes.Margins.NO_MARGINS);
+						                // builder.setMediaSize(PrintAttributes.MediaSize.ISO_A4);
+						                // builder.setColorMode(PrintAttributes.COLOR_MODE_COLOR);
+						                // builder.setResolution(new PrintAttributes.Resolution("default", self.tmpPdfName, 600, 600));
 						                
 						                // send success result to cordova
 						                PluginResult result = new PluginResult(PluginResult.Status.OK);
@@ -127,6 +146,9 @@ public class Html2pdf extends CordovaPlugin
 						                
 						                // Create & send a print job
 										printManager.print(self.tmpPdfName, printAdapter, builder.build());
+										
+										
+										
 									}
 							});
 							
@@ -135,7 +157,11 @@ public class Html2pdf extends CordovaPlugin
 					        baseURL        = baseURL.substring(0, baseURL.lastIndexOf('/') + 1);
 					        
 					        // Load content into the print webview
-							webView.loadDataWithBaseURL(baseURL, content, "text/html", "utf-8", null);
+					        if( showWebViewForDebugging )
+	            	        {
+					        	cordova.getActivity().addContentView(page, new ViewGroup.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
+	            	        }
+				            page.loadDataWithBaseURL(baseURL, content, "text/html", "utf-8", null);
 		            	}
 		            }
 		        });
@@ -185,9 +211,6 @@ public class Html2pdf extends CordovaPlugin
         final WebView page = new Html2PdfWebView(ctx);
         final Html2pdf self = this;
         
-        // set to true to see the webview (useful for debugging)
-        final boolean showWebViewForDebugging = false;
-        
         if( showWebViewForDebugging )
         {
         	page.setVisibility(View.VISIBLE);
@@ -218,7 +241,7 @@ public class Html2pdf extends CordovaPlugin
                         pdfViewIntent.setType("application/pdf");
 
                         // remove the webview
-                        if( !showWebViewForDebugging )
+                        if( !self.showWebViewForDebugging )
                         {
                         	ViewGroup vg = (ViewGroup)(page.getParent());
                         	vg.removeView(page);
