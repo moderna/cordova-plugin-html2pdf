@@ -67,11 +67,14 @@ public class Html2pdf extends CordovaPlugin
 		{
 			if( action.equals("create") )
 			{
-				Log.v(LOG_TAG,"java create pdf from html called");
-				Log.v(LOG_TAG, "File: " + args.getString(1));
-				// Log.v(LOG_TAG, "Html: " + args.getString(0));
-				Log.v(LOG_TAG, "Html start:" + args.getString(0).substring(0, 30));
-				Log.v(LOG_TAG, "Html end:" + args.getString(0).substring(args.getString(0).length() - 30));
+				if( showWebViewForDebugging )
+				{
+					Log.v(LOG_TAG,"java create pdf from html called");
+					Log.v(LOG_TAG, "File: " + args.getString(1));
+					// Log.v(LOG_TAG, "Html: " + args.getString(0));
+					Log.v(LOG_TAG, "Html start:" + args.getString(0).substring(0, 30));
+					Log.v(LOG_TAG, "Html end:" + args.getString(0).substring(args.getString(0).length() - 30));
+				}
 				
 				if( args.getString(1) != null && args.getString(1) != "null" )
 					this.tmpPdfName = args.getString(1);  
@@ -267,7 +270,14 @@ public class Html2pdf extends CordovaPlugin
          *  Making it small in the beginning has some effects on the html <body> (body
          *  width will always remain 100 if not set explicitly).
          */
-        ctx.addContentView(page, new ViewGroup.LayoutParams(100, 100));
+        if( !showWebViewForDebugging )
+        {
+        	ctx.addContentView(page, new ViewGroup.LayoutParams(100, 100));
+        }
+        else
+        {
+        	ctx.addContentView(page, new ViewGroup.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+        }
         page.loadDataWithBaseURL(baseURL, content, "text/html", "utf-8", null);
     }
     
