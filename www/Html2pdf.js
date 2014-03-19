@@ -9,7 +9,6 @@ var Html2pdf =
 {
     create : function( html, filePath, success, error )
     {
-        console.log("write")
         exec(success, error, "Html2pdf", "create", [html, filePath])
     }
 }
