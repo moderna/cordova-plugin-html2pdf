@@ -237,26 +237,30 @@ public class Html2pdf extends CordovaPlugin
                   public void run()
                   {
                         // slice the web screenshot into pages and save as pdf
-                        File tmpFile = self.saveWebViewAsPdf(getWebViewAsBitmap(page));
-
-                        // add pdf as stream to the print intent
-                        Intent pdfViewIntent = new Intent(Intent.ACTION_VIEW, Uri.fromFile(tmpFile));
-                        pdfViewIntent.setType("application/pdf");
-
-                        // remove the webview
-                        if( !self.showWebViewForDebugging )
-                        {
-                        	ViewGroup vg = (ViewGroup)(page.getParent());
-                        	vg.removeView(page);
+                	  	Bitmap b = getWebViewAsBitmap(page);
+                	  	if( b != null )
+                	  	{
+	                        File tmpFile = self.saveWebViewAsPdf(b);
+	
+	                        // add pdf as stream to the print intent
+	                        Intent pdfViewIntent = new Intent(Intent.ACTION_VIEW, Uri.fromFile(tmpFile));
+	                        pdfViewIntent.setType("application/pdf");
+	
+	                        // remove the webview
+	                        if( !self.showWebViewForDebugging )
+	                        {
+	                        	ViewGroup vg = (ViewGroup)(page.getParent());
+	                        	vg.removeView(page);
+	                        }
+	                        
+			                // send success result to cordova
+			                PluginResult result = new PluginResult(PluginResult.Status.OK);
+			                result.setKeepCallback(false); 
+		                    self.callbackContext.sendPluginResult(result);
+	                        
+	                        // start the pdf viewer app(trigger the pdf view intent)
+	                        self.cordova.startActivityForResult(self, pdfViewIntent, 0);
                         }
-                        
-		                // send success result to cordova
-		                PluginResult result = new PluginResult(PluginResult.Status.OK);
-		                result.setKeepCallback(false); 
-	                    self.callbackContext.sendPluginResult(result);
-                        
-                        // start the pdf viewer app(trigger the pdf view intent)
-                        self.cordova.startActivityForResult(self, pdfViewIntent, 0);
                   }
                 }, 100);
             }
@@ -308,8 +312,7 @@ public class Html2pdf extends CordovaPlugin
             result.setKeepCallback(false);
             callbackContext.sendPluginResult(result);
             
-            b = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        	return b;
+        	return null;
         }
         
         Log.v(LOG_TAG, "Html2Pdf.getWebViewAsBitmap -> Content width: " + width + ", height: " + height );
