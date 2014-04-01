@@ -262,7 +262,7 @@ public class Html2pdf extends CordovaPlugin
 	                        self.cordova.startActivityForResult(self, pdfViewIntent, 0);
                         }
                   }
-                }, 100);
+                }, 500);
             }
         });
 
