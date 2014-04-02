@@ -24,6 +24,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.media.MediaScannerConnection;
+import android.media.MediaScannerConnection.OnScanCompletedListener;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -241,7 +243,9 @@ public class Html2pdf extends CordovaPlugin
                 	  	if( b != null )
                 	  	{
 	                        File tmpFile = self.saveWebViewAsPdf(b);
-	
+                    		
+	                        b.recycle();
+	                        
 	                        // add pdf as stream to the print intent
 	                        Intent pdfViewIntent = new Intent(Intent.ACTION_VIEW, Uri.fromFile(tmpFile));
 	                        pdfViewIntent.setType("application/pdf");
@@ -257,6 +261,19 @@ public class Html2pdf extends CordovaPlugin
 			                PluginResult result = new PluginResult(PluginResult.Status.OK);
 			                result.setKeepCallback(false); 
 		                    self.callbackContext.sendPluginResult(result);
+		                    
+		                    // add file to media scanner
+		                    MediaScannerConnection.scanFile(
+	                    		self.cordova.getActivity(),
+	                    		new String[]{tmpFile.getAbsolutePath()},
+	                    		null,
+	                    		new OnScanCompletedListener() {
+	                    		   @Override
+	                    		   public void onScanCompleted(String path, Uri uri) {
+	                    		      Log.v(LOG_TAG, "file '" + path + "' was scanned seccessfully: " + uri);
+	                    		   }
+	                    		}
+                    		);
 	                        
 	                        // start the pdf viewer app(trigger the pdf view intent)
 	                        self.cordova.startActivityForResult(self, pdfViewIntent, 0);
@@ -370,6 +387,8 @@ public class Html2pdf extends CordovaPlugin
                 
                 // move current position indicator
             	currPos += sliceHeight;
+            	
+            	currPage.recycle();
             }
             
             // create pdf
