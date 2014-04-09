@@ -18,10 +18,13 @@ import com.lowagie.text.Image;
 import com.lowagie.text.PageSize;
 import com.lowagie.text.pdf.PdfWriter;
 
+import android.R.bool;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.media.MediaScannerConnection;
@@ -49,7 +52,7 @@ public class Html2pdf extends CordovaPlugin
 	private CallbackContext callbackContext;
 	
 	// change your path on the sdcard here
-	private String publicTmpDir = "at.modalog.cordova.plugin.html2pdf"; // prepending a dot "." would make it hidden
+	private String publicTmpDir = ".at.modalog.cordova.plugin.html2pdf"; // prepending a dot "." would make it hidden
 	private String tmpPdfName = "print.pdf";
 	
 	// set to true to see the webview (useful for debugging)
@@ -150,7 +153,8 @@ public class Html2pdf extends CordovaPlugin
 					                    self.callbackContext.sendPluginResult(result);
 						                
 						                // Create & send a print job
-										printManager.print(self.tmpPdfName, printAdapter, builder.build());
+					                    File filePdf = new File(self.tmpPdfName);
+										printManager.print(filePdf.getName(), printAdapter, builder.build());
 										
 										
 										
@@ -247,7 +251,8 @@ public class Html2pdf extends CordovaPlugin
 	                        b.recycle();
 	                        
 	                        // add pdf as stream to the print intent
-	                        Intent pdfViewIntent = new Intent(Intent.ACTION_VIEW, Uri.fromFile(tmpFile));
+	                        Intent pdfViewIntent = new Intent(Intent.ACTION_VIEW);
+	                        pdfViewIntent.setDataAndNormalize(Uri.fromFile(tmpFile));
 	                        pdfViewIntent.setType("application/pdf");
 	
 	                        // remove the webview
@@ -257,11 +262,6 @@ public class Html2pdf extends CordovaPlugin
 	                        	vg.removeView(page);
 	                        }
 	                        
-			                // send success result to cordova
-			                PluginResult result = new PluginResult(PluginResult.Status.OK);
-			                result.setKeepCallback(false); 
-		                    self.callbackContext.sendPluginResult(result);
-		                    
 		                    // add file to media scanner
 		                    MediaScannerConnection.scanFile(
 	                    		self.cordova.getActivity(),
@@ -275,8 +275,35 @@ public class Html2pdf extends CordovaPlugin
 	                    		}
                     		);
 	                        
-	                        // start the pdf viewer app(trigger the pdf view intent)
-	                        self.cordova.startActivityForResult(self, pdfViewIntent, 0);
+	                        // start the pdf viewer app (trigger the pdf view intent)
+		                    PluginResult result;
+		                    boolean success = false; 
+		                    if( self.canHandleIntent(self.cordova.getActivity(), pdfViewIntent) )
+		                    {
+			                    try
+			                    {
+			                    	self.cordova.startActivityForResult(self, pdfViewIntent, 0);
+				                    success = true;
+			                    }
+			                    catch( ActivityNotFoundException e )
+			                    {
+			                    	success = false;
+			                    }
+		                    }
+		                    if( success )
+		                    {
+		                    	// send success result to cordova
+				                result = new PluginResult(PluginResult.Status.OK);
+				                result.setKeepCallback(false); 
+			                    self.callbackContext.sendPluginResult(result);
+		                    }
+		                    else
+		                    {
+		                    	// send error
+		                        result = new PluginResult(PluginResult.Status.ERROR, "activity_not_found");
+		                        result.setKeepCallback(false);
+		                        self.callbackContext.sendPluginResult(result);
+		                    }
                         }
                   }
                 }, 500);
@@ -301,6 +328,21 @@ public class Html2pdf extends CordovaPlugin
         }
         page.loadDataWithBaseURL(baseURL, content, "text/html", "utf-8", null);
     }
+    
+    public static final String MIME_TYPE_PDF = "application/pdf";
+
+	/**
+	 * Check if the supplied context can handle the given intent.
+	 *
+	 * @param context
+	 * @param intent
+	 * @return boolean
+	 */
+	public boolean canHandleIntent(Context context, Intent intent)
+	{
+	    PackageManager packageManager = context.getPackageManager();
+	    return (packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY).size() > 0);
+	}
     
     /**
      * Takes a WebView and returns a Bitmap representation of it (takes a "screenshot").
@@ -361,6 +403,13 @@ public class Html2pdf extends CordovaPlugin
             File file;
             FileOutputStream stream;
             
+            // creat nomedia file to avoid indexing tmp files
+            File noMediaFile = new File(dir.getAbsolutePath() + "/", ".nomedia");
+            if( !noMediaFile.exists() ) 
+            {
+            	noMediaFile.createNewFile();
+            }
+            
             double pageWidth  = PageSize.A4.getWidth()  * 0.85; // width of the image is 85% of the page
             double pageHeight = PageSize.A4.getHeight() * 0.80; // max height of the image is 80% of the page
             double pageHeightToWithRelation = pageHeight / pageWidth; // e.g.: 1.33 (4/3)
@@ -393,7 +442,13 @@ public class Html2pdf extends CordovaPlugin
             
             // create pdf
             Document document = new Document();
-            File filePdf = new File(dir, this.tmpPdfName); // change the output name of the pdf here
+            File filePdf = new File(sdCard.getAbsolutePath() + "/" + this.tmpPdfName); // change the output name of the pdf here
+            // create dirs if necessary
+            if( this.tmpPdfName.contains("/") )
+            {
+            	File filePdfDir = new File(filePdf.getAbsolutePath().substring(0, filePdf.getAbsolutePath().lastIndexOf("/"))); // get  the dir portion
+            	filePdfDir.mkdirs();
+            }
             PdfWriter.getInstance(document,new FileOutputStream(filePdf));
             document.open();
             for( int i=1; i<=currPageCount; ++i )
