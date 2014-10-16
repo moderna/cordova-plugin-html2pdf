@@ -16,6 +16,13 @@ You may use phonegap CLI as follows:
 ➜ phonegap local plugin add https://github.com/moderna/cordova-plugin-html2pdf.git
 [phonegap] adding the plugin: https://github.com/moderna/cordova-plugin-html2pdf.git
 [phonegap] successfully added the plugin
+
+This Plugin requires iText.jar to be added to your project. Here is the last open source version (4.2.0) of it:    
+
+  GitHub: https://github.com/ymasory/iText-4.2.0
+  Download .jar:: https://github.com/ymasory/iText-4.2.0/downloads  
+  
+It has been confirmed to work with cordova 3.3.0+
 </pre>
 
 Usage
