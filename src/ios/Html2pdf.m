@@ -119,22 +119,27 @@
         [[render printToPDF] writeToFile: filePath atomically: YES];
     }
     
+
     // remove webPage
     [webView stopLoading];
     webView.delegate = nil;
     [webView removeFromSuperview];
     webView = nil;
-    
+
     // trigger success response
     [self success];
-    
+
     // show "open pdf with ..." menu
     NSURL* url = [NSURL fileURLWithPath:filePath];
     self.documentController = [UIDocumentInteractionController interactionControllerWithURL:url];
-    
+
     documentController.delegate = self;
-    
-    BOOL isValid = [documentController presentOpenInMenuFromRect:self.webView.superview.frame inView:self.webView.superview  animated:YES]; // Provide where u want to read pdf from yourReadPdfButton
+
+    UIView* view = self.webView.superview;
+    CGRect rect = view.frame; // open in top center
+    rect.size.height *= 0.02;
+
+    BOOL isValid = [documentController presentOpenInMenuFromRect:rect inView:view animated:YES];
     
     if (!isValid) {
         NSString* messageString = [NSString stringWithFormat:@"No PDF reader was found on your device. Please download a PDF reader (eg. iBooks or Acrobat)."];
