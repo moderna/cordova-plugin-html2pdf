@@ -80,7 +80,7 @@
                                                 messageAsString:[resultMsg stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
     
     // send cordova result
-    [self writeJavascript:[result toSuccessCallbackString:command.callbackId]];
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 
 - (void)error:(NSString*)message
@@ -93,8 +93,7 @@
                                                 messageAsString:[resultMsg stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
     
     // send cordova result
-    [self writeJavascript:[result toErrorCallbackString:command.callbackId]];
-
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 
 - (void)webViewDidFinishLoad:(UIWebView *)webView

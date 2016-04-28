@@ -1,7 +1,7 @@
 Html 2 Pdf
 =============
 
-This is a pdf creation plugin for Phonegap 3.3.0 / Cordova 3.3.1 supporting Android (>=2.3.3) and iOS(>=6.0).
+This is a pdf creation plugin for PCordova 6.1.1+ supporting Android (>4.1) and iOS(>=6.0).
 It creates a pdf from the given html and stores it on the device.
 
 There is one method:
